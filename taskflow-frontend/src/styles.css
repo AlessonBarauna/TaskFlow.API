@@ -1,0 +1,76 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Variáveis de tema (precisam estar aqui, fora do componente) ──────── */
+
+:root {
+  /* Dark (padrão) */
+  --bg:            #07070f;
+  --surface:       #0f0f1c;
+  --surface-2:     #111120;
+  --input-bg:      #07070f;
+  --border:        #1a1a2e;
+  --border-input:  #1e1e30;
+  --border-hover:  #252538;
+
+  --text-1:        #ffffff;
+  --text-2:        #dddddd;
+  --text-3:        #aaaaaa;
+  --text-4:        #555555;
+  --text-5:        #333333;
+  --text-6:        #2a2a3a;
+  --text-7:        #222222;
+
+  --accent:        #00ff88;
+  --accent-2:      #00c4ff;
+  --accent-glow:   rgba(0, 255, 136, 0.08);
+  --accent-border: rgba(0, 255, 136, 0.33);
+  --accent-bg:     rgba(0, 255, 136, 0.08);
+  --accent-bg2:    rgba(0, 255, 136, 0.15);
+
+  --red:           #ff4757;
+  --orange:        #ffa502;
+  --green:         #2ed573;
+  --purple:        #a29bfe;
+
+  --check-text:    #07070f;
+}
+
+:root[data-theme="light"] {
+  --bg:            #f0f2f7;
+  --surface:       #ffffff;
+  --surface-2:     #f6f7fb;
+  --input-bg:      #f6f7fb;
+  --border:        #e4e8f0;
+  --border-input:  #d4d8e4;
+  --border-hover:  #c8cdd8;
+
+  --text-1:        #0d0d1a;
+  --text-2:        #2a2a3a;
+  --text-3:        #555566;
+  --text-4:        #8888a0;
+  --text-5:        #aaaabc;
+  --text-6:        #c8c8d8;
+  --text-7:        #bbbbcc;
+
+  --accent:        #00a855;
+  --accent-2:      #0099cc;
+  --accent-glow:   rgba(0, 168, 85, 0.08);
+  --accent-border: rgba(0, 168, 85, 0.35);
+  --accent-bg:     rgba(0, 168, 85, 0.08);
+  --accent-bg2:    rgba(0, 168, 85, 0.16);
+
+  --red:           #e03040;
+  --orange:        #d4820a;
+  --green:         #1aab4e;
+  --purple:        #6c60f0;
+
+  --check-text:    #ffffff;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+
+html, body {
+  background: var(--bg);
+  min-height: 100vh;
+  transition: background-color 0.25s;
+}

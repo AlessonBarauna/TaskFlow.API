@@ -1,0 +1,525 @@
+<!-- Confetti -->
+@if (confettiPieces().length > 0) {
+  <div class="confetti-container">
+    @for (p of confettiPieces(); track p.id) {
+      <div
+        class="confetti-piece"
+        [style.left.%]="p.left"
+        [style.width.px]="p.size"
+        [style.height.px]="p.size * 0.6"
+        [style.background]="p.color"
+        [style.animation-delay.s]="p.delay"
+        [style.animation-duration.s]="p.dur"
+      ></div>
+    }
+  </div>
+}
+
+<!-- Toast padrão -->
+@if (toast()) {
+  <div class="toast">{{ toast() }}</div>
+}
+
+<!-- Undo delete toast -->
+@if (undoToast()) {
+  <div class="undo-toast">
+    <span>Tarefa deletada</span>
+    <button class="undo-btn" (click)="undoDelete()">Desfazer</button>
+  </div>
+}
+
+<!-- Focus Mode Overlay -->
+@if (focusMode()) {
+  <div class="focus-overlay">
+    <div class="focus-box">
+      <div class="focus-header">
+        <span class="focus-label">// MODO FOCO</span>
+        <button class="focus-close" (click)="toggleFocus()">✕</button>
+      </div>
+      @if (focusTask()) {
+        <div class="focus-task">
+          <div class="focus-priority-dot" [style.background]="priorityColor(focusTask()!.priority)"></div>
+          <div class="focus-task-info">
+            <div class="focus-task-text">{{ focusTask()!.text }}</div>
+            <div class="focus-task-meta">
+              <span [style.color]="priorityColor(focusTask()!.priority)">{{ priorityLabel(focusTask()!.priority) }}</span>
+              @if (focusTask()!.dueDate) {
+                <span class="focus-due">{{ dueDateLabel(focusTask()!) }}</span>
+              }
+            </div>
+          </div>
+          <button class="focus-done-btn" (click)="complete(focusTask()!); toggleFocus()">Concluir ✓</button>
+        </div>
+        <div class="focus-hint">tarefa de maior prioridade pendente</div>
+      } @else {
+        <div class="focus-empty">
+          <div class="focus-empty-icon">🎉</div>
+          <div>Todas as tarefas concluídas!</div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<div class="app">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-top">
+        <div class="logo-icon">⚡</div>
+        <h1 class="title">TaskFlow</h1>
+        <div class="header-actions">
+          <button
+            class="icon-btn sound-btn"
+            (click)="toggleSound()"
+            [title]="soundEnabled() ? 'Clique para silenciar' : 'Clique para ativar som'"
+            [class.active]="soundEnabled()">
+            {{ soundEnabled() ? '🔊' : '🔇' }}
+            <span class="sound-label">{{ soundEnabled() ? 'on' : 'off' }}</span>
+          </button>
+          <button
+            class="icon-btn sound-btn"
+            (click)="requestNotifications()"
+            [class.active]="notifPermission() === 'granted'"
+            [title]="notifPermission() === 'granted' ? 'Notificações ativas' : notifPermission() === 'denied' ? 'Bloqueado pelo browser' : 'Ativar notificações'">
+            {{ notifPermission() === 'denied' ? '🔕' : '🔔' }}
+            <span class="sound-label">
+              {{ notifPermission() === 'granted' ? 'ativo' : notifPermission() === 'denied' ? 'block.' : 'ativar' }}
+            </span>
+          </button>
+          <button
+            class="icon-btn"
+            (click)="toggleTheme()"
+            [title]="themeMode() === 'dark' ? 'Tema claro (T)' : 'Tema escuro (T)'">
+            {{ themeMode() === 'dark' ? '☀️' : '🌙' }}
+          </button>
+          <button
+            class="icon-btn"
+            (click)="toggleFocus()"
+            [class.active]="focusMode()"
+            title="Modo Foco (Z)">
+            🎯
+          </button>
+        </div>
+      </div>
+      <p class="subtitle">// organizador de prioridades</p>
+    </div>
+
+    <!-- Stats (4 cards) -->
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL</div>
+        <div class="stat-value white">{{ counts().total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">FEITAS</div>
+        <div class="stat-value green">{{ counts().done }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">URGENTE</div>
+        <div class="stat-value red">{{ counts().high }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">STREAK</div>
+        <div class="stat-value purple">{{ streakDays() }}🔥</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-bar-wrap">
+      <div class="progress-header">
+        <span class="progress-label">Progresso do dia</span>
+        <span class="progress-pct">{{ progress() }}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="progress()"></div>
+      </div>
+    </div>
+
+    <!-- Weekly Stats -->
+    <div class="weekly-wrap">
+      <div class="weekly-header">
+        <span class="weekly-label">Últimos 7 dias</span>
+        <span class="weekly-count">{{ weeklyDone() }} concluídas</span>
+      </div>
+      <div class="weekly-chart">
+        @for (val of weeklyChart(); track $index) {
+          <div class="bar-col">
+            <div
+              class="bar"
+              [style.height.%]="(val / maxWeeklyChart()) * 100"
+              [title]="val + ' tarefa(s)'"
+            ></div>
+          </div>
+        }
+      </div>
+      <div class="weekly-days">
+        <span>-6d</span><span>-5d</span><span>-4d</span>
+        <span>-3d</span><span>-2d</span><span>-1d</span><span>hoje</span>
+      </div>
+    </div>
+
+    <!-- Tag Manager -->
+    <div class="tag-manager-wrap">
+      <button class="tag-manager-toggle" (click)="showTagManager.update(v => !v)">
+        🏷️ Tags
+        @if (tags().length > 0) { <span class="tag-count-badge">{{ tags().length }}</span> }
+        <span class="toggle-arrow">{{ showTagManager() ? '▲' : '▼' }}</span>
+      </button>
+
+      @if (showTagManager()) {
+        <div class="tag-manager">
+          <!-- Tags existentes -->
+          <div class="tag-chips">
+            @for (tag of tags(); track tag.id) {
+              <div class="tag-chip-manage">
+                <span
+                  class="tag-chip"
+                  [style.background]="tag.color + '22'"
+                  [style.border-color]="tag.color + '66'"
+                  [style.color]="tag.color"
+                  [class.tag-chip-active]="filterTag() === tag.id"
+                  (click)="setFilterTag(filterTag() === tag.id ? null : tag.id)"
+                  title="Filtrar por esta tag">
+                  {{ tag.name }}
+                </span>
+                <button class="tag-del-btn" (click)="deleteTag(tag.id)" title="Remover tag">✕</button>
+              </div>
+            }
+            @if (tags().length === 0) {
+              <span class="tag-empty">nenhuma tag criada</span>
+            }
+          </div>
+
+          <!-- Criar nova tag -->
+          <div class="tag-create-row">
+            <input
+              class="tag-name-input"
+              [(ngModel)]="newTag.name"
+              placeholder="Nome da tag..."
+              (keydown.enter)="createTag()"
+            />
+            <input
+              class="tag-color-input"
+              type="color"
+              [(ngModel)]="newTag.color"
+              title="Cor da tag"
+            />
+            <button class="tag-add-btn" (click)="createTag()">+ Tag</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Input -->
+    <div class="input-area">
+      <div class="input-row">
+        <input
+          #taskInputRef
+          class="task-input"
+          [(ngModel)]="newTask.text"
+          placeholder="Nova tarefa... (N)"
+          (keydown.enter)="create()"
+        />
+        <input
+          class="date-input"
+          type="date"
+          [(ngModel)]="newTask.dueDate"
+          title="Prazo (opcional)"
+        />
+        <button class="add-btn" (click)="create()">+ Add</button>
+      </div>
+      <div class="priority-row">
+        <button class="pri-btn" [class.active-alta]="newTask.priority === 'alta'"   (click)="setPriority('alta')">🔴 Alta</button>
+        <button class="pri-btn" [class.active-media]="newTask.priority === 'media'" (click)="setPriority('media')">🟡 Média</button>
+        <button class="pri-btn" [class.active-baixa]="newTask.priority === 'baixa'" (click)="setPriority('baixa')">🟢 Baixa</button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <input
+      #searchInputRef
+      class="search-input"
+      [ngModel]="search()"
+      (ngModelChange)="search.set($event); onSearchChange()"
+      placeholder="🔍 Buscar tarefas... (F)"
+    />
+
+    <!-- Filters + Sort -->
+    <div class="filters-row">
+      <div class="filters">
+        @for (f of filters; track f) {
+          <button class="filter-btn" [class.active]="filter() === f && !showTrash()" (click)="showTrash.set(false); setFilter(f)">
+            {{ f }} <span class="filter-count">{{ getFilterCount(f) }}</span>
+          </button>
+        }
+        <button class="filter-btn trash-btn" [class.active]="showTrash()" (click)="toggleTrash()" title="Lixeira (soft delete)">
+          🗑️ lixeira
+          @if (showTrash()) { <span class="filter-count">{{ totalItems() }}</span> }
+        </button>
+      </div>
+      <button class="sort-btn" (click)="toggleSort()" [title]="'Ordenar por: ' + sortLabel()">
+        {{ sortLabel() }}
+      </button>
+    </div>
+
+    <!-- Task List -->
+    <div class="task-list">
+      @for (task of filteredTasks(); track task.id; let i = $index) {
+
+        <!-- Priority group header -->
+        @if (isFirstOfPriority(filteredTasks(), i)) {
+          <div class="priority-group-header" [style.color]="priorityColor(task.priority)">
+            <span class="group-dot" [style.background]="priorityColor(task.priority)"></span>
+            {{ priorityLabel(task.priority) }}
+          </div>
+        }
+
+        <div
+          class="task-card"
+          [class.done]="task.done"
+          [class.completing]="completingId() === task.id"
+          [class.dragging]="draggedTaskId() === task.id"
+          draggable="true"
+          (dragstart)="onDragStart(task)"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop(task)"
+          (dragend)="onDragEnd()"
+        >
+          <span class="drag-handle">⠿</span>
+
+          <button
+            class="check-btn"
+            [style.border-color]="task.done ? priorityColor(task.priority) : priorityColor(task.priority) + '66'"
+            [style.background]="task.done ? priorityColor(task.priority) : 'transparent'"
+            (click)="complete(task)">
+            @if (task.done) { <span class="check-mark">✓</span> }
+          </button>
+
+          <div class="task-info">
+            @if (editingId() === task.id) {
+              <input
+                class="edit-input"
+                [(ngModel)]="editingText"
+                (keydown.enter)="saveEdit(task)"
+                (keydown.escape)="cancelEdit()"
+                (blur)="saveEdit(task)"
+              />
+            } @else {
+              <div class="task-text" (dblclick)="startEdit(task)" title="Duplo clique para editar">
+                {{ task.text }}
+              </div>
+            }
+
+            <div class="task-meta">
+              <span
+                class="task-priority-tag"
+                [style.color]="priorityColor(task.priority)"
+                (click)="cyclePriority(task)"
+                title="Clique para alterar prioridade">
+                {{ priorityLabel(task.priority) }} ↻
+              </span>
+
+              <!-- Due date: edit mode -->
+              @if (editingDueDateId() === task.id) {
+                <div class="due-edit-row">
+                  <input
+                    class="due-input"
+                    type="date"
+                    [(ngModel)]="editingDueDate"
+                    (keydown.enter)="saveDueDate(task)"
+                    (keydown.escape)="cancelEditDueDate()"
+                  />
+                  <button class="due-save"   (click)="saveDueDate(task)">✓</button>
+                  <button class="due-cancel" (click)="cancelEditDueDate()">✕</button>
+                </div>
+              } @else {
+                <span
+                  class="due-date"
+                  [class.overdue]="isOverdue(task)"
+                  (click)="startEditDueDate(task)"
+                  title="Clique para editar prazo">
+                  @if (task.dueDate) {
+                    {{ dueDateLabel(task) }}
+                  } @else {
+                    <span class="due-add">+ prazo</span>
+                  }
+                </span>
+              }
+            </div>
+
+            <!-- Tags da tarefa -->
+            <div class="task-tags">
+              @for (tag of task.tags; track tag.id) {
+                <span
+                  class="tag-chip"
+                  [style.background]="tag.color + '22'"
+                  [style.border-color]="tag.color + '66'"
+                  [style.color]="tag.color"
+                  (click)="removeTagFromTask(tag.id, task.id)"
+                  title="Clique para remover">
+                  {{ tag.name }} ✕
+                </span>
+              }
+
+              <!-- Botão adicionar tag -->
+              @if (!task.done) {
+                <div class="tag-picker-wrap">
+                  <button class="tag-add-chip" (click)="toggleTagPicker(task.id)" title="Adicionar tag">
+                    + tag
+                  </button>
+                  @if (tagPickerTaskId() === task.id && availableTagsForTask(task).length > 0) {
+                    <div class="tag-picker-dropdown">
+                      @for (tag of availableTagsForTask(task); track tag.id) {
+                        <button
+                          class="tag-picker-option"
+                          [style.border-left-color]="tag.color"
+                          (click)="addTagToTask(tag.id, task.id)">
+                          {{ tag.name }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Botão expandir -->
+          <button
+            class="expand-btn"
+            (click)="toggleExpand(task.id)"
+            [class.expanded]="expandedTaskId() === task.id"
+            [title]="expandedTaskId() === task.id ? 'Recolher' : 'Notas e subtarefas'">
+            @if (task.subTasks.length > 0) {
+              <span class="subtask-badge">{{ subTaskProgress(task) }}%</span>
+            } @else {
+              ≡
+            }
+          </button>
+
+          @if (showTrash()) {
+            <button class="restore-btn" (click)="restoreTask(task.id)" title="Restaurar tarefa">↩</button>
+          } @else if (confirmDeleteId() === task.id) {
+            <div class="confirm-delete">
+              <span class="confirm-text">Deletar?</span>
+              <button class="btn-yes" (click)="confirmDelete(task.id)">Sim</button>
+              <button class="btn-no"  (click)="cancelDelete()">Não</button>
+            </div>
+          } @else {
+            <button class="del-btn" (click)="requestDelete(task.id)">✕</button>
+          }
+        <!-- Painel expandido: notas + subtarefas -->
+        @if (expandedTaskId() === task.id) {
+          <div class="expand-panel">
+
+            <!-- Notas -->
+            <div class="expand-section">
+              <div class="expand-section-label">📝 Notas</div>
+              @if (editingNotesId() === task.id) {
+                <textarea
+                  class="notes-textarea"
+                  [(ngModel)]="editingNotes"
+                  placeholder="Escreva uma nota..."
+                  rows="3"
+                  (keydown.escape)="cancelEditNotes()"
+                ></textarea>
+                <div class="notes-actions">
+                  <button class="due-save"   (click)="saveNotes(task)">Salvar</button>
+                  <button class="due-cancel" (click)="cancelEditNotes()">Cancelar</button>
+                </div>
+              } @else {
+                <div
+                  class="notes-display"
+                  (click)="startEditNotes(task)"
+                  title="Clique para editar">
+                  {{ task.notes || 'Clique para adicionar uma nota...' }}
+                </div>
+              }
+            </div>
+
+            <!-- Subtarefas -->
+            <div class="expand-section">
+              <div class="expand-section-label">
+                ☑️ Subtarefas
+                @if (task.subTasks.length > 0) {
+                  <span class="subtask-progress-label">{{ subTaskProgress(task) }}%</span>
+                }
+              </div>
+
+              @if (task.subTasks.length > 0) {
+                <div class="subtask-progress-bar">
+                  <div class="subtask-progress-fill" [style.width.%]="subTaskProgress(task)"></div>
+                </div>
+              }
+
+              <div class="subtask-list">
+                @for (sub of task.subTasks; track sub.id) {
+                  <div class="subtask-item" [class.subtask-done]="sub.done">
+                    <button
+                      class="subtask-check"
+                      [class.checked]="sub.done"
+                      (click)="toggleSubTask(task, sub)">
+                      @if (sub.done) { ✓ }
+                    </button>
+                    <span class="subtask-text">{{ sub.text }}</span>
+                    <button class="subtask-del" (click)="deleteSubTask(task, sub.id)">✕</button>
+                  </div>
+                }
+              </div>
+
+              <div class="subtask-add-row">
+                <input
+                  class="subtask-input"
+                  [(ngModel)]="newSubTaskText[task.id]"
+                  placeholder="Nova subtarefa..."
+                  (keydown.enter)="createSubTask(task.id)"
+                />
+                <button class="subtask-add-btn" (click)="createSubTask(task.id)">+</button>
+              </div>
+            </div>
+
+          </div>
+        }
+
+        </div><!-- /task-card -->
+      } @empty {
+        <div class="empty">
+          <div class="empty-icon">✓</div>
+          <div>nenhuma tarefa aqui</div>
+        </div>
+      }
+    </div>
+
+    <!-- Paginação -->
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button class="page-btn" [disabled]="currentPage() === 1" (click)="prevPage()">‹</button>
+
+        @for (p of [].constructor(totalPages()); track $index) {
+          <button
+            class="page-btn"
+            [class.page-active]="currentPage() === $index + 1"
+            (click)="goToPage($index + 1)">
+            {{ $index + 1 }}
+          </button>
+        }
+
+        <button class="page-btn" [disabled]="currentPage() === totalPages()" (click)="nextPage()">›</button>
+        <span class="page-info">{{ totalItems() }} tarefas</span>
+      </div>
+    }
+
+    <!-- Keyboard shortcuts -->
+    <div class="shortcuts-hint">
+      <span><kbd>N</kbd> nova</span>
+      <span><kbd>F</kbd> buscar</span>
+      <span><kbd>Z</kbd> foco</span>
+      <span><kbd>T</kbd> tema</span>
+      <span><kbd>Esc</kbd> cancelar</span>
+    </div>
+
+    <div class="footer">made with TaskFlow • {{ year }}</div>
+  </div>
+</div>

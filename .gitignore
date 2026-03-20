@@ -1,18 +1,30 @@
-## .NET / ASP.NET Core
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.slnLaunch.user
+
+# .NET build outputs
 bin/
 obj/
-*.user
-*.suo
-.vs/
+publish/
 
-## Database (local SQLite file)
+# SQLite local database
 *.db
 *.db-shm
 *.db-wal
 
-## Secrets / environment
+# Secrets
 appsettings.Local.json
 secrets.json
 
-## Build outputs
-publish/
+# Node / Angular
+node_modules/
+dist/
+.angular/cache/
+
+# OS
+.DS_Store
+Thumbs.db
